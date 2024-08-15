@@ -1,82 +1,45 @@
 package auth
 
-import (
-    "encoding/json"
+import(
     "fmt"
-    "io/ioutil"
-    "log"
-    "net/http"
-    "os"
-    "bytes"
+	"os"
+	"net/http"
+    "context"
+    "golang.org/x/oauth2"
+    "golang.org/x/oauth2/google"
 )
 
-func getGoogleClientID() string {
-    googleClientID, exists := os.LookupEnv("GOOGLE_CLIENT_ID")
-    if !exists {
-        log.Fatal("Google Client ID not defined in .env file")
-    }
-    return googleClientID
-}
 
-func getGoogleClientSecret() string {
-    googleClientSecret, exists := os.LookupEnv("GOOGLE_CLIENT_SECRET")
-    if !exists {
-        log.Fatal("Google Client Secret not defined in .env file")
-    }
-    return googleClientSecret
-}
-
-func getGoogleAccessToken(code string) string {
-    clientID := getGoogleClientID()
-    clientSecret := getGoogleClientSecret()
-
-    requestBody := map[string]string{
-        "client_id":     clientID,
-        "client_secret": clientSecret,
-        "code":          code,
-        "grant_type":    "authorization_code",
-        "redirect_uri":  "http://localhost:8080/auth/google/callback",
-    }
-    requestJSON, _ := json.Marshal(requestBody)
-
-    req, err := http.NewRequest("POST", "https://oauth2.googleapis.com/token", bytes.NewBuffer(requestJSON))
-    if err != nil {
-        log.Panic("Request creation failed")
-    }
-    req.Header.Set("Content-Type", "application/json")
-
-    resp, err := http.DefaultClient.Do(req)
-    if err != nil {
-        log.Panic("Request failed")
-    }
-    defer resp.Body.Close()
-
-    respBody, _ := ioutil.ReadAll(resp.Body)
-
-    type googleAccessTokenResponse struct {
-        AccessToken string `json:"access_token"`
-    }
-
-    var googleResp googleAccessTokenResponse
-    json.Unmarshal(respBody, &googleResp)
-
-    return googleResp.AccessToken
-}
-
-func getGoogleData(accessToken string) string {
-    req, err := http.NewRequest("GET", "https://www.googleapis.com/oauth2/v3/userinfo", nil)
-    if err != nil {
-        log.Panic("API Request creation failed")
-    }
-
-    req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
-
-    resp, err := http.DefaultClient.Do(req)
-    if err != nil {
-        log.Panic("Request failed")
-    }
-    defer resp.Body.Close()
-
-    respBody, _ := ioutil.ReadAll(resp.Body)
-    return string(respBody)
-}
+func HandleOAuthRedirect(w http.ResponseWriter, r *http.Request) {
+       clientID := os.Getenv("GOOGLE_OAUTH_CLIENT_ID")
+       clientSecret := os.Getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+       config := oauth2.Config{
+           ClientID:     clientID,
+           ClientSecret: clientSecret,
+           RedirectURL:  "http://localhost:8080/auth/callback",
+           Scopes:       []string{"email", "profile"},
+           Endpoint:     google.Endpoint,
+       }
+       url := config.AuthCodeURL("random", oauth2.AccessTypeOnline)
+       http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+   }
+   
+   func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
+       code := r.URL.Query().Get("code")
+       clientID := os.Getenv("GOOGLE_OAUTH_CLIENT_ID")
+       clientSecret := os.Getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+       config := oauth2.Config{
+           ClientID:     clientID,
+           ClientSecret: clientSecret,
+           RedirectURL:  "http://localhost:8080/auth/callback",
+           Scopes:       []string{"email", "profile"},
+           Endpoint:     google.Endpoint,
+       }
+       token, err := config.Exchange(context.Background(), code)
+       if err != nil {
+           http.Error(w, err.Error(), http.StatusInternalServerError)
+           return
+       }
+       fmt.Printf("Token obtained: %s\n", token.AccessToken)
+       return
+   }

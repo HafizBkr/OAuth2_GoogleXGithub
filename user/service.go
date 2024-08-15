@@ -1,8 +1,8 @@
 package user
 
 import (
-    "errors"
     "anonymdevs/models"
+    "errors"
     "time"
     "github.com/google/uuid"
 )
@@ -11,10 +11,17 @@ type UserService interface {
     RegisterUser(userPayload *UserPayload, authProvider string) (*models.User, error)
     GetUserByEmail(email string) (*models.User, error)
     UpdateUser(user *models.User) error
+    GetUserById(id string) (*models.User, error)
 }
 
 type DefaultUserService struct {
     Repo UserRepository
+}
+
+func NewUserService(repo UserRepository) UserService {
+    return &DefaultUserService{
+        Repo: repo,
+    }
 }
 
 func (s *DefaultUserService) RegisterUser(userPayload *UserPayload, authProvider string) (*models.User, error) {
@@ -60,6 +67,9 @@ func (s *DefaultUserService) RegisterUser(userPayload *UserPayload, authProvider
 
 func (s *DefaultUserService) GetUserByEmail(email string) (*models.User, error) {
     return s.Repo.GetUserByEmail(email)
+}
+func (s *DefaultUserService) GetUserById(id string) (*models.User, error) {
+    return s.Repo.GetUserByID(id)
 }
 
 func (s *DefaultUserService) UpdateUser(user *models.User) error {

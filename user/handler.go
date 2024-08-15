@@ -6,6 +6,7 @@ import (
     "time"
 )
 
+
 func UpdateProfileHandler(w http.ResponseWriter, r *http.Request, service UserService) {
     var payload UpdateProfilePayload
     if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -19,9 +20,9 @@ func UpdateProfileHandler(w http.ResponseWriter, r *http.Request, service UserSe
         return
     }
 
-    user, err := service.GetUserByEmail(userID)
+    user, err := service.GetUserById(userID)
     if err != nil {
-        http.Error(w, "User not found", http.StatusNotFound)
+        http.Error(w, "User not found", http.StatusNotFound) 
         return
     }
 
