@@ -1,9 +1,8 @@
 package main
 
 import (
-	"anonymdevs/auth"
-	"anonymdevs/database/postgres"
-	"anonymdevs/providers"
+	"Oauth/auth"
+    "Oauth/providers"
 	"log"
 	"log/slog"
 	"net"
@@ -25,23 +24,17 @@ func main() {
     if port == "" {
         log.Fatal("PORT is not set in the environment variables")
     }
-    postgresURL := os.Getenv("POSTGRES_URL")
-    if postgresURL == "" {
-        log.Fatal("POSTGRES_URL is not set in the environment variables")
-    }
-    postgresPool := postgres.GetConnectionPool(postgresURL)
     logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
         AddSource: true,
     }))
     jwtProvider := providers.NewJWTProvider()
-    txProvider := providers.NewTransactionProvider(postgresPool)
+
     
     emailProvider := providers.NewEmailProvider(
         os.Getenv("ELASTIC_EMAIL_KEY"),
         os.Getenv("ELASTIC_EMAIL_SENDER"),
     )
     logger.Info("JWT Provider initialized", "provider", jwtProvider)
-    logger.Info("Transaction Provider initialized", "provider", txProvider)
     logger.Info("Email Provider initialized", "provider", emailProvider)
     r := chi.NewRouter()
     r.Use(cors.Handler(cors.Options{

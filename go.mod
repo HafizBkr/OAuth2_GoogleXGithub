@@ -1,4 +1,4 @@
-module anonymdevs
+module Oauth
 
 go 1.22.3
 
