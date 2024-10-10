@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complétez votre profil</title>
+</head>
+<body>
+    <h1>Complétez votre profil</h1>
+    <form action="/save-profile" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="email" value="{{.Email}}">
+        <label for="username">Nom d'utilisateur :</label>
+        <input type="text" name="username" required>
+        <br>
+        <label for="profile_picture">Photo de profil :</label>
+        <input type="file" name="profile_picture" accept="image/*" required>
+        <br>
+        <button type="submit">Enregistrer</button>
+    </form>
+</body>
+</html>

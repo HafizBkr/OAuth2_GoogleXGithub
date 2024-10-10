@@ -1,18 +1,16 @@
 package main
 
 import (
-	"Oauth/auth"
-    "Oauth/providers"
-	"log"
-	"log/slog"
-	"net"
-	"net/http"
-	"os"
-	"time"
+    "Oauth/auth"
+    "log"
+    "net"
+    "net/http"
+    "os"
+    "time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
-	"github.com/joho/godotenv"
+    "github.com/go-chi/chi/v5"
+    "github.com/go-chi/cors"
+    "github.com/joho/godotenv"
 )
 
 func main() {
@@ -24,18 +22,7 @@ func main() {
     if port == "" {
         log.Fatal("PORT is not set in the environment variables")
     }
-    logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-        AddSource: true,
-    }))
-    jwtProvider := providers.NewJWTProvider()
 
-    
-    emailProvider := providers.NewEmailProvider(
-        os.Getenv("ELASTIC_EMAIL_KEY"),
-        os.Getenv("ELASTIC_EMAIL_SENDER"),
-    )
-    logger.Info("JWT Provider initialized", "provider", jwtProvider)
-    logger.Info("Email Provider initialized", "provider", emailProvider)
     r := chi.NewRouter()
     r.Use(cors.Handler(cors.Options{
         AllowedOrigins:   []string{"https://*", "http://*"},
@@ -48,27 +35,21 @@ func main() {
     r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusOK)
     })
-   
-    
+
     staticDir := "./static"
-	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
+    r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, staticDir+"/index.html")
-	})
+    r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+        http.ServeFile(w, r, staticDir+"/index.html")
+    })
 
-	
-//google authentification
+    // Authentification Google
+    r.Get("/oauth-test", auth.HandleOAuthRedirect)
+    r.Get("/auth/callback", auth.HandleAuthCallback)
 
-    
-r.Get("/oauth-test", auth.HandleOAuthRedirect)
-r.Get("/auth/callback", auth.HandleAuthCallback)
-
-//github authentification
-r.Get("/oauth-github", auth.HandleOAuthRedirectGit)
-r.Get("/auth/github/callback", auth.HandleAuthCallbackGit)
- 
- 
+    // Compléter le profil
+    r.Get("/complete-profile", auth.HandleCompleteProfile)
+    r.Post("/save-profile", auth.SaveProfileHandler)
 
     server := http.Server{
         Addr:         net.JoinHostPort("0.0.0.0", port),
