@@ -68,4 +68,4 @@ Forkez le projet.
 Créez une branche pour votre fonctionnalité (`git checkout -b feature/new-feature`).
 Commitez vos modifications (`git commit -am 'Add new feature'`).
 Poussez la branche (`git push origin feature/new-feature`).
-Ouvrez une pull request.
+Ouvrez une pull request.:
